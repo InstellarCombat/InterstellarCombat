@@ -1,11 +1,12 @@
 public class PlayerSpaceship
 {
-	private int x;
-	private int y;
-	private int z;
-	private int xVelo;
-	private int yVelo;
-	private int zVelo;
+	private double x;
+	private double y;
+	private double z;
+	private double xVelo;
+	private double yVelo;
+	private double zVelo;
+	static final long serialVersionUID = 1L;
 	
 	public PlayerSpaceship()
 	{
@@ -17,7 +18,7 @@ public class PlayerSpaceship
 		zVelo = 0;
 	}
 	
-	public PlayerSpaceship(int x1, int y1, int z1)
+	public PlayerSpaceship(double x1, double y1, double z1)
 	{
 		x = x1;
 		y = y1;
@@ -27,17 +28,17 @@ public class PlayerSpaceship
 		zVelo = 0;
 	}
 	
-	public void moveRight(int v)
+	public void moveRight(double v)
 	{
 		xVelo += v;
 	}
 
-	public void moveForward(int v)
+	public void moveForward(double v)
 	{
 		yVelo += v;
 	}
 	
-	public void moveUp(int v)
+	public void moveUp(double v)
 	{
 		zVelo += v;
 	}
