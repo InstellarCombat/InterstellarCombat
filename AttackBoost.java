@@ -6,6 +6,7 @@ public class AttackBoost extends Powerup
 	{
 		aBoost = 1;
 		dBoost = 0;
+		sBoost = 0;
 	}
 	
 	public void draw(Graphics g)

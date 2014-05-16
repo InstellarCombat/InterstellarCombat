@@ -1,12 +1,12 @@
 import java.awt.Graphics;
 
-public class DefenseBoost extends Powerup
+public class SpeedBoost extends Powerup
 {
-	public DefenseBoost()
+	public SpeedBoost()
 	{
 		aBoost = 0;
-		dBoost = 1;
-		sBoost = 0;
+		dBoost = 0;
+		sBoost = 1;
 	}
 	
 	public void draw(Graphics g)

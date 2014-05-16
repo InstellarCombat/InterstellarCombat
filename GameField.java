@@ -11,5 +11,8 @@ public class GameField extends JPanel
 	public GameField(PlayerSpaceship[] s)
 	{
 		ship = s;
+		
+		powerups = new ArrayList<Powerup>();
+		bullets = new ArrayList<Projectile>();
 	}
 }

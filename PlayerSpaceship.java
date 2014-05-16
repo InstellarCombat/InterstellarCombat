@@ -6,6 +6,7 @@ public class PlayerSpaceship
 	private double xVelo;
 	private double yVelo;
 	private double zVelo;
+	static final long serialVersionUID = 1L;
 	
 	public PlayerSpaceship()
 	{

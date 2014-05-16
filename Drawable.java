@@ -1,6 +1,10 @@
 import java.awt.Graphics;
 
-public interface Drawable
+public abstract class Drawable
 {
-	public void draw(Graphics g);
+	public int x;
+	public int y;
+	public int z;
+	
+	public abstract void draw(Graphics g);
 }
