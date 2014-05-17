@@ -13,10 +13,13 @@ import java.io.Serializable;
 import java.net.Socket;
 
 /**
- *
+ * Reads data from the network. Isn't visible to any class outside of
+ * this package
+ * 
  * @author john_shelby
+ * @credits Aditya Sampath
  */
-public class ClientReader implements Runnable {
+class ClientReader implements Runnable {
 
     private Socket s;
     private NetworkHandler updater;

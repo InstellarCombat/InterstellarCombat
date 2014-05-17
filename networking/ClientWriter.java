@@ -10,10 +10,12 @@ import java.io.*;
 import java.net.*;
 
 /**
- *
+ * Writes data to the network. Not visible to anyone outside of this
+ * package
  * @author john_shelby
+ * @credits Aditya Sampath
  */
-public class ClientWriter implements Runnable {
+class ClientWriter implements Runnable {
 
     private Socket s;
     private NetworkHandler updater;

@@ -1,15 +1,15 @@
 package networking;
 
 import interfaces.*;
-
 import java.net.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.io.*;
 
 /**
- * Sets up server
+ * Sets up server which hosts a connection with itself and 1+
+ * SchoolClients on port 4444
  * 
- * @author aditya sampath
+ * @author Aditya Sampath
  */
 public class SchoolServer implements NetworkHandler {
 	private NetworkGUI win;
@@ -17,6 +17,9 @@ public class SchoolServer implements NetworkHandler {
 	private ArrayList<ClientWriter> cw;
 
 
+	/**
+	 * No args constructor, creates schoolserver object
+	 */
 	public SchoolServer () {
         System.out.println("I am the server!");
         win = null;
@@ -24,6 +27,13 @@ public class SchoolServer implements NetworkHandler {
         cw = new ArrayList<ClientWriter>();
 	}
 	
+	/**
+	 * Runs the SchoolServer. Initializes connection on port 4444.
+	 * Exits the program if
+	 * 
+	 * @throws IOException if it can't create a connection on port 4444
+	 * or if it can't close the serversocket
+	 */
 	public void run () throws IOException {
         ServerSocket serverSocket = null;
         int sPort = 4444;
@@ -41,10 +51,14 @@ public class SchoolServer implements NetworkHandler {
             }
         } catch (IOException e) {
             System.err.println("Could not listen on port: " + sPort);
-            System.exit(-1);
+            throw e;
         }
         
-        serverSocket.close();
+        try {
+        	if (serverSocket != null) serverSocket.close();
+        } catch (IOException ex) {
+        	throw ex;
+        }
     }
 
 	public void register(NetworkGUI n) {
