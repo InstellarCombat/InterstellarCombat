@@ -2,7 +2,6 @@ import java.awt.Graphics;
 
 public class DamageBullet extends Projectile
 {
-	
 	public DamageBullet()
 	{
 		damage = 10;
