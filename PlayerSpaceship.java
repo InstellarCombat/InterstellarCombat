@@ -1,11 +1,11 @@
 public class PlayerSpaceship
 {
-	private double x;
-	private double y;
-	private double z;
-	private double xVelo;
-	private double yVelo;
-	private double zVelo;
+	private float x;
+	private float y;
+	private float z;
+	private float xVelo;
+	private float yVelo;
+	private float zVelo;
 	private int attack;
 	private int defense;
 	private int speed;
@@ -24,7 +24,7 @@ public class PlayerSpaceship
 		speed = 0;
 	}
 	
-	public PlayerSpaceship(double x1, double y1, double z1, int a, int d, int sp)
+	public PlayerSpaceship(float x1, float y1, float z1, int a, int d, int sp)
 	{
 		x = x1;
 		y = y1;
@@ -37,19 +37,19 @@ public class PlayerSpaceship
 		speed = sp;
 	}
 	
-	public void moveRight(double v)
+	public void moveRight(float v)
 	{
 		if (xVelo + v <= speed)
 			xVelo += v;
 	}
 
-	public void moveForward(double v)
+	public void moveForward(float v)
 	{
 		if (yVelo + v <= speed)
 			yVelo += v;
 	}
 	
-	public void moveUp(double v)
+	public void moveUp(float v)
 	{
 		if (zVelo + v <= speed)
 			zVelo += v;
