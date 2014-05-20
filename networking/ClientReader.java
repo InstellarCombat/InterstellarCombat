@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.net.Socket;
+import java.net.SocketException;
 
 /**
  * Reads data from the network. Isn't visible to any class outside of
@@ -24,12 +25,14 @@ class ClientReader implements Runnable {
     private Socket s;
     private NetworkHandler updater;
     private ObjectInputStream in;
+    private boolean shouldClose;
 	private int num;
 
-    public ClientReader(Socket s, int n, NetworkHandler updater) {
+    ClientReader(Socket s, int n, NetworkHandler updater) {
         this.s = s;
         this.updater = updater;
         num = n;
+        shouldClose = false;
         
         try {
             in = new ObjectInputStream(new BufferedInputStream(s.getInputStream()));
@@ -43,7 +46,7 @@ class ClientReader implements Runnable {
     public void run() {
         //String info = null;
         try {
-            while(s.isConnected() && in != null) {
+            while(s.isConnected() && in != null && !shouldClose) {
 
                 Serializable data = null;
                 try {
@@ -51,6 +54,8 @@ class ClientReader implements Runnable {
                 } catch (ClassNotFoundException ex) {
                     ex.printStackTrace();
                     System.exit(0);
+                } catch (SocketException ex) {
+                	//nothing happens gg
                 }
                 //info = (String)data;
                 updater.networkReceive(data, num);
@@ -72,5 +77,9 @@ class ClientReader implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+    
+    void close () {
+    	shouldClose = true;
     }
 }

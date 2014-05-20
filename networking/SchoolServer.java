@@ -74,7 +74,7 @@ public class SchoolServer implements NetworkHandler {
 			System.out.println("Cannot send message (server).");
 		}
 	}
-
+	
 	public void networkReceive(Serializable s, int n) {
 		if (win != null) {
 			for (int i = 0; i < cw.size(); i++) {
@@ -85,5 +85,15 @@ public class SchoolServer implements NetworkHandler {
 		} else {
 			System.out.println("No gui to receive message (server)");
 		}
+	}
+	
+	/**
+	 * Closes the server's network connection and the connection from all the clients to the server
+	 */
+	public void close() {
+		send(new Close());
+		
+		for (ClientWriter c : cw) c.close();	
+		for (ClientReader c : cr) c.close();
 	}
 }

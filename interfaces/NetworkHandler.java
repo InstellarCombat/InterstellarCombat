@@ -33,4 +33,9 @@ public interface NetworkHandler {
 	 * @param n id of client that is sending the data (server only)
 	 */
 	public void networkReceive(Serializable s, int n);
+	
+	/**
+	 * Closes connection to network
+	 */
+	public void close ();
 }

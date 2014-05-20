@@ -21,11 +21,13 @@ class ClientWriter implements Runnable {
     private NetworkHandler updater;
     private ObjectOutputStream out;
     private Serializable obj;
+    private boolean shouldClose;
 
-    public ClientWriter(Socket s, NetworkHandler nh) {
+    ClientWriter(Socket s, NetworkHandler nh) {
         this.s = s;
         this.updater = nh;
         obj = null;
+        shouldClose = false;
         
         try {
             BufferedOutputStream os = new BufferedOutputStream(s.getOutputStream());
@@ -41,8 +43,7 @@ class ClientWriter implements Runnable {
     public void run() {
 
         try {
-            while(s.isConnected() && out != null) {
-
+            while(s.isConnected() && out != null && !shouldClose) {
                 try {
                     Thread.sleep(400);
                 } catch (InterruptedException e) {}
@@ -70,7 +71,11 @@ class ClientWriter implements Runnable {
         
     }
 
-	public void send(Serializable s) {
+	void send(Serializable s) {
 		obj = s;
+	}
+	
+	void close () {
+		shouldClose = true;
 	}
 }

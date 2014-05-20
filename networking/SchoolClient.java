@@ -83,10 +83,21 @@ public class SchoolClient implements NetworkHandler {
 	}
 
 	public void networkReceive(Serializable s, int n) {
-		if (win != null)
-			win.receive(s);
-		else
+		if (win != null) {
+			if (s instanceof Close)
+				close();
+			else
+				win.receive(s);
+		} else {
 			System.out.println("No gui to receive message");
+		}
 	}
-
+	
+	/**
+	 * Closes client connection to server cleanly
+	 */
+	public void close () {
+		cw.close();
+		cr.close();
+	}
 }

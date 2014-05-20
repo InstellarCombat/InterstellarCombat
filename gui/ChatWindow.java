@@ -53,6 +53,7 @@ public class ChatWindow extends JFrame implements ActionListener, NetworkGUI  {
 	    netHandler.send(new Message(text, myIP));
 	    setText("");
 	    setLog(getLog() + "\n me: " + text);
+	    if (text.equals("/break")) netHandler.close();
 	}
 	
 	public void makeVisibiletoWorld () {
