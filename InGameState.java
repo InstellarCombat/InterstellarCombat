@@ -4,6 +4,10 @@
  */
 package AppStates;
 
+import java.awt.Color;
+
+import mygame.SpaceshipControl;
+
 import com.bulletphysics.collision.shapes.CollisionShape;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
@@ -32,10 +36,11 @@ import com.jme3.scene.CameraNode;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.CameraControl.ControlDirection;
+import com.jme3.util.SkyFactory;
 
 /**
  *
- * @author Yoav
+ * @author Adi
  */
 public class InGameState extends AbstractAppState {
     private AppStateManager stateManager;
@@ -47,13 +52,19 @@ public class InGameState extends AbstractAppState {
   
     // In game fields
     private RigidBodyControl  ship_phy;
-    private CompoundCollisionShape shipShape;
-    private VehicleControl shipControl;
+    private SpaceshipControl  ship_control;
     private Spatial ship;
     private CameraNode cam;
     private boolean forward;
     
     @Override
+    /**
+     * This method initializes the inGameState, including Keybindings, Spaceships, Light,
+     * Sky, Camera, and GUI features that the player see's.
+     * 
+     * @param stateManager - manages the states of the game, used internally
+     * @param app - running application, used internally to start game
+     */
     public void initialize(AppStateManager stateManager, Application app) {
         super.initialize(stateManager, app); 
         this.app = (SimpleApplication)app;
@@ -65,11 +76,15 @@ public class InGameState extends AbstractAppState {
         initKeys();
         initSpaceship();
         initDirectionalLight();
+        initSky();
         initChaseCam();
         ship_phy.setGravity(new Vector3f(0, 0, 0));
     }
     
     @Override
+    /**
+     * This method detaches everything from the inGameState before exiting the state
+     */
     public void cleanup() {
       super.cleanup();
       // unregister all my listeners, detach all my nodes, etc...
@@ -78,6 +93,10 @@ public class InGameState extends AbstractAppState {
     }
     
     @Override
+    /**
+     * This method enables the state or disables it
+     * @param enabled - whether the state is enabled or not
+     */
     public void setEnabled(boolean enabled) {
       // Pause and unpause
       super.setEnabled(enabled);
@@ -91,6 +110,10 @@ public class InGameState extends AbstractAppState {
     }
     
     @Override
+    /**
+     * This method updates the non-user dependent features of the state
+     * @param tpf
+     */
     public void update(float tpf) {
       // do the following while game is RUNNING
       // modify scene graph...
@@ -98,6 +121,9 @@ public class InGameState extends AbstractAppState {
 
     }
     
+    /**
+     * This method initializes the keybindings used by player to control the spaceship
+     */
     public void initKeys() {
         inputManager.addMapping("Pause",  new KeyTrigger(KeyInput.KEY_P));
         inputManager.addMapping("Left",   new KeyTrigger(KeyInput.KEY_LEFT));
@@ -106,11 +132,13 @@ public class InGameState extends AbstractAppState {
         inputManager.addMapping("Up",   new KeyTrigger(KeyInput.KEY_UP));                                 
         inputManager.addMapping("Down",  new KeyTrigger(KeyInput.KEY_DOWN));
         inputManager.addMapping("Shoot", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
+        inputManager.addMapping("Emergency",  new KeyTrigger(KeyInput.KEY_E));
                                      
         // Add the names to the action listener.
         inputManager.addListener(actionListener,"Pause","Shoot");
         inputManager.addListener(analogListener,"Left", "Right", "Accelerate","Up","Down");
     }
+    
     
     private ActionListener actionListener = new ActionListener() {
     public void onAction(String name, boolean keyPressed, float tpf) {
@@ -124,46 +152,51 @@ public class InGameState extends AbstractAppState {
     public void onAnalog(String name, float value, float tpf) {
      
         if (name.equals("Accelerate")) {
-        	forward = !forward;
+        
         	accelerateShip();
-        	System.out.println("Go");
-        }
-        if (name.equals("Left")) {
         	
         }
+        if (name.equals("Left")) {
+        	rotateLeft();
+        }
         if (name.equals("Right")) {
-       
+        	rotateRight();
         }
         if (name.equals("Up")) {
-            
+        	rotateUp();
         }
         if (name.equals("Down")) {
-            
+            rotateDown();
+        }
+        if (name.equals("Emergency")) {
+        	clear();
         }
   
     }
   };
   
-  public void initSpaceship() {
+  private void initSpaceship() {
       ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
       //com.jme3.bullet.collision.shapes.CollisionShape shipShape = CollisionShapeFactory.createDynamicMeshShape(ship);
       //ship_phy =new RigidBodyControl(shipShape,2000);
       ship_phy = new RigidBodyControl(1.0f);
+      ship_control = new SpaceshipControl();
       //ship_phy.setGravity(new Vector3f(0, 0, 0));
       ship.addControl(ship_phy);
+      ship.addControl(ship_control);
       physics.getPhysicsSpace().add(ship_phy);
       rootNode.attachChild(ship); 
      
   
   }
   
-  public void initDirectionalLight() {
+  private void initDirectionalLight() {
       DirectionalLight sun = new DirectionalLight();
       sun.setDirection(new Vector3f(-0.1f, -0.7f, -1.0f));
       rootNode.addLight(sun);
   }
   
-  public void initCrosshairs() {
+  private void initCrosshairs() {
     app.getGuiNode().detachAllChildren();
     BitmapFont myFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
     BitmapText ch = new BitmapText(myFont, false);
@@ -175,18 +208,79 @@ public class InGameState extends AbstractAppState {
     app.getGuiNode().attachChild(ch);
   }
   
-  public void initChaseCam() {
+  private void makeBullets() {
+	  
+  }
+  
+  private void initChaseCam() {
     app.getFlyByCamera().setEnabled(false);
     CameraNode camNode = new CameraNode("CamNode",app.getCamera());
     camNode.setControlDir(ControlDirection.SpatialToCamera);
     ((Node)ship).attachChild(camNode);
-    camNode.setLocalTranslation(new Vector3f(15, 5, 0));
+    camNode.setLocalTranslation(new Vector3f(30, 10, 0));
     camNode.lookAt(ship.getLocalTranslation(), Vector3f.UNIT_Y); 
     
     cam = camNode;
   }
   
-  public void accelerateShip() {
-	ship_phy.applyCentralForce(new Vector3f(-10,0,0));
+  private void initSky() {
+	  rootNode.attachChild(SkyFactory.createSky(
+	            assetManager, "Textures/Sky/Bright/BrightSky.dds", false));
   }
+  
+  /**
+   * Accelerates the ship
+   */
+  public void accelerateShip() {
+	  Vector3f direction=new Vector3f(-10,0,0);
+	  ship_phy.getPhysicsRotation().multLocal(direction);
+	  ship_phy.applyCentralForce(direction);
+	//ship_phy.applyCentralForce(new Vector3f(-10,0,0));
+  }
+  
+  /**
+   * Brake function for the ship
+   */
+  public void decelerateShip() {
+	  Vector3f direction=new Vector3f(1,0,0);
+	  ship_phy.getPhysicsRotation().multLocal(direction);
+	  ship_phy.applyCentralForce(direction);
+	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
+  }
+  
+  /** 
+   * Rotates the ship up
+   */
+  public void rotateUp() {
+	  ship_phy.applyImpulse(new Vector3f(0,.001f,0), Vector3f.UNIT_X);
+  }
+  
+  /**
+   * Rotates the ship down
+   */
+  public void rotateDown() {
+	  ship_phy.applyImpulse(new Vector3f(0,-.001f,0), Vector3f.UNIT_X);
+  }
+  
+  /**
+   * Rotates the ship left
+   */
+  public void rotateLeft() {
+	  ship_phy.applyImpulse(new Vector3f(0,0,.001f), Vector3f.ZERO);
+  }
+  
+  /** 
+   * Rotates the ship right
+   */
+  public void rotateRight() {
+	  ship_phy.applyImpulse(new Vector3f(0,0,-.001f), Vector3f.UNIT_Y);
+  }
+  
+  /** 
+   * Clears all forces on ship
+   */
+  public void clear() {
+	  ship_phy.clearForces();
+  }
+  
 }

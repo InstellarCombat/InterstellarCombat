@@ -10,13 +10,19 @@ import com.jme3.app.SimpleApplication;
 import com.jme3.material.Material;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.shape.Box;
-
+/**
+*
+* @author Adi
+*/
 public class InterstellarCombat extends SimpleApplication {
     
     private InGameState inGameState;
     private MenuScreenState menuScreenState;
     
     @Override
+    /**
+     * Initializes states of the game starting with the menu screen
+     */
     public void simpleInitApp() {
         inGameState = new InGameState();
         stateManager.attach(inGameState);
@@ -28,6 +34,9 @@ public class InterstellarCombat extends SimpleApplication {
         geo.move(0, 0, 2);
         }
     
+    /**
+     * Updates the non user dependant features of the game
+     */
     public void simpleUpdate() {
         
     }

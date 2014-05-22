@@ -13,12 +13,15 @@ import java.util.ResourceBundle.Control;
 
 /**
  *
- * @author Yoav
+ * @author Adi
  */
 public class SpaceshipControl extends AbstractControl {
     //fields
-    
-    
+    private int health;
+    private int attack;
+    private int defence;
+    private int speed;
+	
     public SpaceshipControl() {
         
     }
@@ -41,7 +44,7 @@ public class SpaceshipControl extends AbstractControl {
 
     @Override
     protected void controlRender(RenderManager rm, ViewPort vp) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+       
     }
     
     @Override
@@ -55,6 +58,7 @@ public class SpaceshipControl extends AbstractControl {
     
     public void left(float amt) {
        // spatial.rotate(xAngle, yAngle, zAngle)
+    	spatial.rotate(0, 0, -amt*10);
     }
     
     public void right(float amt) {

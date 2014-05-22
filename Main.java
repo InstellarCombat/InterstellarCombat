@@ -6,9 +6,10 @@ package mygame;
 
 /**
  *
- * @author Yoav
+ * @author Adi
  */
 public class Main {
+	
     public static void main(String[] args){
         InterstellarCombat game = new InterstellarCombat();
         game.start(); // start the game
