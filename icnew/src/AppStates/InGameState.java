@@ -39,6 +39,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.CameraControl.ControlDirection;
 import com.jme3.scene.shape.Sphere;
+import com.jme3.scene.shape.Sphere.TextureMode;
 import com.jme3.util.SkyFactory;
 
 /**
@@ -51,16 +52,21 @@ public class InGameState extends AbstractAppState {
     private Node              rootNode;
     private AssetManager      assetManager;
     private InputManager      inputManager;
-    private BulletAppState    physics;
+    private BulletAppState    shipPhysics;
+    private BulletAppState    bulletPhysics;
   
     // In game fields
     private RigidBodyControl  ship_phy;
-    private RigidBodyControl  bullet_phy;
     private SpaceshipControl  ship_control;
     private Spatial ship;
     private CameraNode cam;
-    private boolean forward;
+    
+    // bullets
+    private RigidBodyControl  bullet_phy;
     private Sphere bullet;
+    private Material matBullet;
+    
+    
     
     @Override
     /**
@@ -76,15 +82,16 @@ public class InGameState extends AbstractAppState {
         this.rootNode = this.app.getRootNode();
         this.assetManager = this.app.getAssetManager();
         this.inputManager = this.app.getInputManager();
-        this.physics = new BulletAppState();
-        stateManager.attach(physics);
+        this.shipPhysics = new BulletAppState();
+        this.bulletPhysics = new BulletAppState();
+        stateManager.attach(shipPhysics);
+        stateManager.attach(bulletPhysics);
         initKeys();
         initSpaceship();
         initDirectionalLight();
         initSky();
         initChaseCam();
         ship_phy.setGravity(new Vector3f(0, 0, 0));
-        //bullet_phy.setGravity(new Vector3f(0, 0, 0));
     }
     
     @Override
@@ -131,26 +138,26 @@ public class InGameState extends AbstractAppState {
      * This method initializes the keybindings used by player to control the spaceship
      */
     public void initKeys() {
-        inputManager.addMapping("Pause",  new KeyTrigger(KeyInput.KEY_P));
-        inputManager.addMapping("Left",   new KeyTrigger(KeyInput.KEY_LEFT));
-        inputManager.addMapping("Right",  new KeyTrigger(KeyInput.KEY_RIGHT));
-        inputManager.addMapping("Accelerate", new KeyTrigger(KeyInput.KEY_SPACE));
-        inputManager.addMapping("Decelerate", new KeyTrigger(KeyInput.KEY_LSHIFT));   
-        inputManager.addMapping("Up",   new KeyTrigger(KeyInput.KEY_UP));                                 
-        inputManager.addMapping("Down",  new KeyTrigger(KeyInput.KEY_DOWN));
-        inputManager.addMapping("Shoot", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
-        inputManager.addMapping("Emergency",  new KeyTrigger(KeyInput.KEY_E));
-                                     
+        inputManager.addMapping("Pause", new KeyTrigger(KeyInput.KEY_P));
+        inputManager.addMapping("Left", new KeyTrigger(KeyInput.KEY_LEFT));
+        inputManager.addMapping("Right", new KeyTrigger(KeyInput.KEY_RIGHT));
+        inputManager.addMapping("Accelerate", new KeyTrigger(KeyInput.KEY_UP));
+        inputManager.addMapping("Decelerate", new KeyTrigger(KeyInput.KEY_DOWN));
+        inputManager.addMapping("Up", new KeyTrigger(KeyInput.KEY_A));
+        inputManager.addMapping("Down", new KeyTrigger(KeyInput.KEY_Z));
+        inputManager.addMapping("Shoot", new KeyTrigger(KeyInput.KEY_SPACE));
+        inputManager.addMapping("Emergency", new KeyTrigger(KeyInput.KEY_E));
+        
         // Add the names to the action listener.
-        inputManager.addListener(actionListener,"Pause","Shoot");
-        inputManager.addListener(analogListener,"Left", "Right", "Accelerate","Up","Down");
+        inputManager.addListener(actionListener, "Pause", "Shoot");
+        inputManager.addListener(analogListener, "Left", "Right", "Accelerate", "Decelerate", "Up", "Down", "Emergency");
     }
-    
     
     private ActionListener actionListener = new ActionListener() {
     public void onAction(String name, boolean keyPressed, float tpf) {
       if (name.equals("Shoot") && !keyPressed) {
-          shoot(ship);
+    	  System.out.println("SHOOT");
+          shoot();
       }
     }
   };
@@ -163,20 +170,21 @@ public class InGameState extends AbstractAppState {
         	accelerateShip();
         	
         }
-        if (name.equals("Decelerate")) {
+        if (name.equals("Decelerate"))
+        {
         	decelerateShip();
         }
         if (name.equals("Left")) {
-        	rotateLeft();
+        	moveLeft();
         }
         if (name.equals("Right")) {
-        	rotateRight();
+        	moveRight();
         }
         if (name.equals("Up")) {
-        	rotateUp();
+        	moveUp();
         }
         if (name.equals("Down")) {
-            rotateDown();
+            moveDown();
         }
         if (name.equals("Emergency")) {
         	clear();
@@ -194,8 +202,8 @@ public class InGameState extends AbstractAppState {
       //ship_phy.setGravity(new Vector3f(0, 0, 0));
       ship.addControl(ship_phy);
       ship.addControl(ship_control);
-      physics.getPhysicsSpace().add(ship_phy);
-      rootNode.attachChild(ship); 
+      shipPhysics.getPhysicsSpace().add(ship_phy);
+      rootNode.attachChild(ship);
      
   
   }
@@ -218,20 +226,33 @@ public class InGameState extends AbstractAppState {
     app.getGuiNode().attachChild(ch);
   }
   
-  private void shoot(Spatial ship) {
-	  
-	  Vector3f spot = ship.getLocalTranslation();
+  private void prepareBullet() {
 	  bullet = new Sphere(32, 32, 0.4f, true, false);
-	  Geometry ball_geo = new Geometry("Bullet", bullet);
-	  ball_geo.setMaterial(new Material(assetManager,"Common/MatDefs/Misc/Unshaded.j3md"));
-	  ball_geo.setLocalTranslation(spot);
+	  bullet.setTextureMode(TextureMode.Projected);
+	  Geometry ball_geo = new Geometry("bullet", bullet);
+	  matBullet = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+	  ball_geo.setMaterial(matBullet);
+	  rootNode.attachChild(ball_geo);
 	  
-	  bullet_phy = new RigidBodyControl(1f);
-	  ball_geo.addControl(bullet_phy);
-	  
-	  
-	  bullet_phy.setLinearVelocity(spot);
-	  physics.getPhysicsSpace().add(bullet_phy);
+	  /** Position the cannon ball  */
+	    ball_geo.setLocalTranslation(ship.getLocalTranslation());
+	    /** Make the ball physcial with a mass > 0.0f */
+	    bullet_phy = new RigidBodyControl(1f);
+	    
+	    /** Add physical ball to physics space. */
+	    ball_geo.addControl(bullet_phy);
+	    bulletPhysics.getPhysicsSpace().add(bullet_phy);
+	    
+	    bullet_phy.setGravity(new Vector3f(0,0,0));
+	    
+  }
+  public void shoot() {
+	  /** Create a cannon ball geometry and attach to scene graph. */
+	 
+	    prepareBullet();
+	    
+	    /** Accelerate the physcial ball to shoot it. */
+	    bullet_phy.setLinearVelocity(new Vector3f(-1,0,0).mult(200));
   }
   
   private void initChaseCam() {
@@ -254,7 +275,7 @@ public class InGameState extends AbstractAppState {
    * Accelerates the ship
    */
   public void accelerateShip() {
-	  Vector3f direction=new Vector3f(-10,0,0);
+	  Vector3f direction=new Vector3f(-15f,0,0);
 	  ship_phy.getPhysicsRotation().multLocal(direction);
 	  ship_phy.applyCentralForce(direction);
 	//ship_phy.applyCentralForce(new Vector3f(-10,0,0));
@@ -264,7 +285,7 @@ public class InGameState extends AbstractAppState {
    * Brake function for the ship
    */
   public void decelerateShip() {
-	  Vector3f direction=new Vector3f(10,0,0);
+	  Vector3f direction=new Vector3f(15f,0,0);
 	  ship_phy.getPhysicsRotation().multLocal(direction);
 	  ship_phy.applyCentralForce(direction);
 	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
@@ -274,35 +295,64 @@ public class InGameState extends AbstractAppState {
    * Rotates the ship up
    */
   public void rotateUp() {
-	  ship_phy.applyImpulse(new Vector3f(0,.001f,0), Vector3f.UNIT_X);
+	  ship_phy.applyImpulse(new Vector3f(0,.005f,0), Vector3f.UNIT_X);
+  }
+  
+  public void moveUp() {
+	  Vector3f direction=new Vector3f(0,15f,0);
+	  ship_phy.getPhysicsRotation().multLocal(direction);
+	  ship_phy.applyCentralForce(direction);
+	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
   }
   
   /**
    * Rotates the ship down
    */
   public void rotateDown() {
-	  ship_phy.applyImpulse(new Vector3f(0,-.001f,0), Vector3f.UNIT_X);
+	  ship_phy.applyImpulse(new Vector3f(0,-.005f,0), Vector3f.UNIT_X);
+  }
+  
+  public void moveDown() {
+	  Vector3f direction=new Vector3f(0,-15f,0);
+	  ship_phy.getPhysicsRotation().multLocal(direction);
+	  ship_phy.applyCentralForce(direction);
+	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
   }
   
   /**
    * Rotates the ship left
    */
   public void rotateLeft() {
-	  ship_phy.applyImpulse(new Vector3f(0,0,.001f), Vector3f.UNIT_Y);
+	  ship_phy.applyImpulse(new Vector3f(0,0,.005f), Vector3f.UNIT_Y);
+  }
+  
+  public void moveLeft() {
+	  Vector3f direction=new Vector3f(0,0,15f);
+	  ship_phy.getPhysicsRotation().multLocal(direction);
+	  ship_phy.applyCentralForce(direction);
+	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
   }
   
   /** 
    * Rotates the ship right
    */
   public void rotateRight() {
-	  ship_phy.applyImpulse(new Vector3f(0,0,-.001f), Vector3f.UNIT_Y);
+	  ship_phy.applyImpulse(new Vector3f(0,0,-.005f), Vector3f.UNIT_Y);
+  }
+  
+  public void moveRight() {
+	  Vector3f direction=new Vector3f(0,0,-15f);
+	  ship_phy.getPhysicsRotation().multLocal(direction);
+	  ship_phy.applyCentralForce(direction);
+	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
   }
   
   /** 
-   * Clears all forces on ship
+   * Sets velocity of ship to 0
    */
   public void clear() {
-	  ship_phy.clearForces();
+	  ship_phy.setLinearVelocity(new Vector3f(0, 0, 0));
+	  ship_phy.setAngularVelocity(new Vector3f(0, 0, 0));
   }
   
 }
