@@ -6,6 +6,11 @@ package AppStates;
 
 import java.awt.Color;
 
+import javax.swing.JOptionPane;
+
+import projectiles.DamageBullet;
+import projectiles.Projectile;
+import projectiles.SpeedBullet;
 import mygame.SpaceshipControl;
 
 import com.bulletphysics.collision.shapes.CollisionShape;
@@ -31,11 +36,16 @@ import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.light.DirectionalLight;
+import com.jme3.material.Material;
+import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.CameraNode;
+import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.control.CameraControl.ControlDirection;
+import com.jme3.scene.shape.Sphere;
+import com.jme3.scene.shape.Sphere.TextureMode;
 import com.jme3.util.SkyFactory;
 
 /**
@@ -48,14 +58,21 @@ public class InGameState extends AbstractAppState {
     private Node              rootNode;
     private AssetManager      assetManager;
     private InputManager      inputManager;
-    private BulletAppState    physics;
+    private BulletAppState    shipPhysics;
+    private BulletAppState    bulletPhysics;
   
     // In game fields
     private RigidBodyControl  ship_phy;
     private SpaceshipControl  ship_control;
     private Spatial ship;
     private CameraNode cam;
-    private boolean forward;
+    
+    // bullets
+    private RigidBodyControl  bullet_phy;
+    private Projectile bullet;
+    private Material matBullet;
+    
+    
     
     @Override
     /**
@@ -71,8 +88,10 @@ public class InGameState extends AbstractAppState {
         this.rootNode = this.app.getRootNode();
         this.assetManager = this.app.getAssetManager();
         this.inputManager = this.app.getInputManager();
-        this.physics = new BulletAppState();
-        stateManager.attach(physics);
+        this.shipPhysics = new BulletAppState();
+        this.bulletPhysics = new BulletAppState();
+        stateManager.attach(shipPhysics);
+        stateManager.attach(bulletPhysics);
         initKeys();
         initSpaceship();
         initDirectionalLight();
@@ -125,74 +144,87 @@ public class InGameState extends AbstractAppState {
      * This method initializes the keybindings used by player to control the spaceship
      */
     public void initKeys() {
-        inputManager.addMapping("Pause", new KeyTrigger(KeyInput.KEY_P));
-        inputManager.addMapping("Left", new KeyTrigger(KeyInput.KEY_LEFT));
-        inputManager.addMapping("Right", new KeyTrigger(KeyInput.KEY_RIGHT));
+        inputManager.addMapping("Pause",  new KeyTrigger(KeyInput.KEY_P));
+        inputManager.addMapping("Left",   new KeyTrigger(KeyInput.KEY_LEFT));
+        inputManager.addMapping("Right",  new KeyTrigger(KeyInput.KEY_RIGHT));
         inputManager.addMapping("Accelerate", new KeyTrigger(KeyInput.KEY_UP));
         inputManager.addMapping("Decelerate", new KeyTrigger(KeyInput.KEY_DOWN));
-        inputManager.addMapping("Up", new KeyTrigger(KeyInput.KEY_A));
-        inputManager.addMapping("Down", new KeyTrigger(KeyInput.KEY_Z));
+        inputManager.addMapping("Up",   new KeyTrigger(KeyInput.KEY_A));
+        inputManager.addMapping("Down",  new KeyTrigger(KeyInput.KEY_Z));
         inputManager.addMapping("Shoot", new KeyTrigger(KeyInput.KEY_SPACE));
-        inputManager.addMapping("Emergency", new KeyTrigger(KeyInput.KEY_E));
-        
+        inputManager.addMapping("Emergency",  new KeyTrigger(KeyInput.KEY_E));
+                                     
         // Add the names to the action listener.
         inputManager.addListener(actionListener, "Pause", "Shoot");
         inputManager.addListener(analogListener, "Left", "Right", "Accelerate", "Decelerate", "Up", "Down", "Emergency");
     }
     
+    
     private ActionListener actionListener = new ActionListener() {
     public void onAction(String name, boolean keyPressed, float tpf) {
       if (name.equals("Shoot") && !keyPressed) {
-          System.out.println("noob");
-      }
-      if (name.equals("Pause") && !keyPressed) {
-          System.out.println("noob2");
+    	  System.out.println("PEW PEW PEW");
+          shoot();
       }
     }
   };
  
   private AnalogListener analogListener = new AnalogListener() {
-    public void onAnalog(String name, float value, float tpf) {
-     
-        if (name.equals("Accelerate")) {
-        
-        	accelerateShip();
-        	
-        }
-        if (name.equals("Decelerate"))
-        {
-        	decelerateShip();
-        }
-        if (name.equals("Left")) {
-        	moveLeft();
-        }
-        if (name.equals("Right")) {
-        	moveRight();
-        }
-        if (name.equals("Up")) {
-        	moveUp();
-        }
-        if (name.equals("Down")) {
-            moveDown();
-        }
-        if (name.equals("Emergency")) {
-        	clear();
-        }
-  
-    }
-  };
+	    public void onAnalog(String name, float value, float tpf) {
+	     
+	        if (name.equals("Accelerate")) {
+	        
+	        	accelerateShip();
+	        	
+	        }
+	        if (name.equals("Decelerate"))
+	        {
+	        	decelerateShip();
+	        }
+	        if (name.equals("Left")) {
+	        	moveLeft();
+	        }
+	        if (name.equals("Right")) {
+	        	moveRight();
+	        }
+	        if (name.equals("Up")) {
+	        	moveUp();
+	        }
+	        if (name.equals("Down")) {
+	            moveDown();
+	        }
+	        if (name.equals("Emergency")) {
+	        	clear();
+	        }
+	  
+	    }
+	  };
   
   private void initSpaceship() {
       ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
+      
       //com.jme3.bullet.collision.shapes.CollisionShape shipShape = CollisionShapeFactory.createDynamicMeshShape(ship);
       //ship_phy =new RigidBodyControl(shipShape,2000);
+      
+      String[] options = {"Big", "Small"};
+      int pane = JOptionPane.showOptionDialog(null, "Choose your ship. A bigger ship has less speed but more damage,  while a smaller ship has greater speed but less damage.", "Choose your ship", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+      if (pane == 0)
+      {
+      	System.out.println("Big");
+      	ship_control = new SpaceshipControl(true);
+      }
+      else if (pane == 1)
+      {
+    	System.out.println("Small");
+        ship_control = new SpaceshipControl(false);
+      }
+      
       ship_phy = new RigidBodyControl(1.0f);
-      ship_control = new SpaceshipControl();
       //ship_phy.setGravity(new Vector3f(0, 0, 0));
       ship.addControl(ship_phy);
       ship.addControl(ship_control);
-      physics.getPhysicsSpace().add(ship_phy);
-      rootNode.attachChild(ship);
+      shipPhysics.getPhysicsSpace().add(ship_phy);
+      rootNode.attachChild(ship); 
      
   
   }
@@ -215,8 +247,44 @@ public class InGameState extends AbstractAppState {
     app.getGuiNode().attachChild(ch);
   }
   
-  private void makeBullets() {
+  private void prepareBullet() {
+	  if (ship_control.getSize())
+	  {
+		  bullet = new DamageBullet(32, 32, 0.4f, true, false);
+	  }
+	  else
+	  {
+		  bullet = new SpeedBullet(32, 32, 0.25f, true, false);
+	  }
 	  
+	  bullet.setTextureMode(TextureMode.Projected);
+	  //bullet.defaultColor;
+	  //bullet.setDefaultColor(new ColorRGBA(0.5f, 0f, 0.5f, 0.5f));
+	  Geometry ball_geo = new Geometry("bullet", bullet);
+	  matBullet = new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md");
+	  ball_geo.setMaterial(matBullet);
+	  rootNode.attachChild(ball_geo);
+	  
+	  /** Position the cannon ball  */
+	    ball_geo.setLocalTranslation(ship.getLocalTranslation());
+	    /** Make the ball physcial with a mass > 0.0f */
+	    bullet_phy = new RigidBodyControl(1f);
+	    
+	    /** Add physical ball to physics space. */
+	    ball_geo.addControl(bullet_phy);
+	    bulletPhysics.getPhysicsSpace().add(bullet_phy);
+	    
+	    bullet_phy.setGravity(new Vector3f(0,0,0));
+	    
+  }
+  public void shoot() {
+	  /** Create a cannon ball geometry and attach to scene graph. */
+	 
+	    prepareBullet();
+	    
+	    /** Accelerate the physical ball to shoot it. */
+	    //System.out.println(bullet.getSpeed());
+	    bullet_phy.setLinearVelocity(new Vector3f(-1,0,0).mult(bullet.getSpeed()*10));
   }
   
   private void initChaseCam() {
@@ -239,7 +307,7 @@ public class InGameState extends AbstractAppState {
    * Accelerates the ship
    */
   public void accelerateShip() {
-	  Vector3f direction=new Vector3f(-10f,0,0);
+	  Vector3f direction=new Vector3f((float)(-ship_control.getSpeed()*3),0,0);
 	  ship_phy.getPhysicsRotation().multLocal(direction);
 	  ship_phy.applyCentralForce(direction);
 	//ship_phy.applyCentralForce(new Vector3f(-10,0,0));
@@ -249,7 +317,7 @@ public class InGameState extends AbstractAppState {
    * Brake function for the ship
    */
   public void decelerateShip() {
-	  Vector3f direction=new Vector3f(10f,0,0);
+	  Vector3f direction=new Vector3f((float)(ship_control.getSpeed()*3),0,0);
 	  ship_phy.getPhysicsRotation().multLocal(direction);
 	  ship_phy.applyCentralForce(direction);
 	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
@@ -263,7 +331,7 @@ public class InGameState extends AbstractAppState {
   }
   
   public void moveUp() {
-	  Vector3f direction=new Vector3f(0,10f,0);
+	  Vector3f direction=new Vector3f(0,(float)(ship_control.getSpeed()*3),0);
 	  ship_phy.getPhysicsRotation().multLocal(direction);
 	  ship_phy.applyCentralForce(direction);
 	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
@@ -277,7 +345,7 @@ public class InGameState extends AbstractAppState {
   }
   
   public void moveDown() {
-	  Vector3f direction=new Vector3f(0,-10f,0);
+	  Vector3f direction=new Vector3f(0,(float)(-ship_control.getSpeed()*3),0);
 	  ship_phy.getPhysicsRotation().multLocal(direction);
 	  ship_phy.applyCentralForce(direction);
 	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
@@ -291,7 +359,7 @@ public class InGameState extends AbstractAppState {
   }
   
   public void moveLeft() {
-	  Vector3f direction=new Vector3f(0,0,10f);
+	  Vector3f direction=new Vector3f(0,0,(float)(ship_control.getSpeed()*3));
 	  ship_phy.getPhysicsRotation().multLocal(direction);
 	  ship_phy.applyCentralForce(direction);
 	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
@@ -305,7 +373,7 @@ public class InGameState extends AbstractAppState {
   }
   
   public void moveRight() {
-	  Vector3f direction=new Vector3f(0,0,-10f);
+	  Vector3f direction=new Vector3f(0,0,(float)(-ship_control.getSpeed()*3));
 	  ship_phy.getPhysicsRotation().multLocal(direction);
 	  ship_phy.applyCentralForce(direction);
 	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
@@ -318,5 +386,4 @@ public class InGameState extends AbstractAppState {
 	  ship_phy.setLinearVelocity(new Vector3f(0, 0, 0));
 	  ship_phy.setAngularVelocity(new Vector3f(0, 0, 0));
   }
-  
 }
