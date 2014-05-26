@@ -38,7 +38,7 @@ public class PlayerSpaceship {
 		ship = s;
 		ship_phy = rc;
 		ship_shape = scs;
-		ship.addControl(ship_phy);
+		//ship.addControl(ship_phy);
 		big = b;
 		if (b)
 		{

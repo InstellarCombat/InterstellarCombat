@@ -95,13 +95,16 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
         stateManager.attach(physics);
    
         initKeys();
-        initSpaceship();
+        initSpaceship(new Vector3f(0,0,5));
+        initOthership(new Vector3f(0,0,-5));
         initCrosshairs();
         initDirectionalLight();
         initSky();
         initChaseCam();
         prepareHealthBar();
+        prepareOtherHealthBar();
         spaceShip.getRigidBodyControl().setGravity(new Vector3f(0, 0, 0));
+        otherShip.getRigidBodyControl().setGravity(new Vector3f(0, 0, 0));
         
         physics.getPhysicsSpace().addCollisionListener(this);
     }
@@ -201,12 +204,10 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
     }
   };
   
-  private void initSpaceship() {
+  private void initSpaceship(Vector3f spot) {
       Spatial ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
       CollisionShape ship_shape = CollisionShapeFactory.createDynamicMeshShape(ship);
       RigidBodyControl ship_phy = new RigidBodyControl(ship_shape, 1.0f);
-      
-      System.out.println("1");
       
       String[] options = {"Big", "Small"};
       //int pane = JOptionPane.showOptionDialog(null, "Choose your ship. A bigger ship has less speed but more damage,  while a smaller ship has greater speed but less damage.", "Choose your ship", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
@@ -227,7 +228,38 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
       physics.getPhysicsSpace().add(spaceShip.getRigidBodyControl());
    
       rootNode.attachChild(ship);
-
+      
+      spaceShip.getSpatial().move(spot);
+      spaceShip.getSpatial().addControl(spaceShip.getRigidBodyControl());
+  }
+  
+  private void initOthership(Vector3f spot) {
+	  Spatial ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
+      CollisionShape ship_shape = CollisionShapeFactory.createDynamicMeshShape(ship);
+      RigidBodyControl ship_phy = new RigidBodyControl(ship_shape, 1.0f);
+      
+      String[] options = {"Big", "Small"};
+      //int pane = JOptionPane.showOptionDialog(null, "Choose your ship. A bigger ship has less speed but more damage,  while a smaller ship has greater speed but less damage.", "Choose your ship", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+      int pane = 1;
+      if (pane == 0)
+      {
+      	System.out.println("Big");
+      	otherShip = new PlayerSpaceship(ship, ship_phy, ship_shape, 0f, 0f, 0f, 0, 0, true);
+      }
+      else if (pane == 1)
+      {
+    	System.out.println("Small");
+    	otherShip = new PlayerSpaceship(ship, ship_phy, ship_shape, 0f, 0f, 0f, 0, 0, false);
+      }
+      
+      System.out.println(otherShip.getSpeed());
+      
+      physics.getPhysicsSpace().add(otherShip.getRigidBodyControl());
+   
+      rootNode.attachChild(ship);
+      
+      otherShip.getSpatial().move(spot);
+      otherShip.getSpatial().addControl(otherShip.getRigidBodyControl());
   }
   
   private Projectile initBullet(PlayerSpaceship ship) {
@@ -323,23 +355,63 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
      
   }
   
+  public void prepareOtherHealthBar() {
+		 
+	  hudText = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"), false);
+	  hudText.setSize(assetManager.loadFont("Interface/Fonts/Default.fnt").getCharSet().getRenderedSize());      // font size
+	  hudText.setColor(ColorRGBA.Red);                             // font color
+	  hudText.setText("Health: " + otherShip.getHealth() + "");             // the text
+	  hudText.setLocalTranslation(0, app.getContext().getSettings().getHeight() - 30, 0); // position
+      app.getGuiNode().attachChild(hudText);
+     
+  }
+
+  public void updateOtherHealthBar() {
+	
+	  app.getGuiNode().detachChild(hudText);
+	  hudText = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"), false);
+	  hudText.setSize(assetManager.loadFont("Interface/Fonts/Default.fnt").getCharSet().getRenderedSize());      // font size
+	  hudText.setColor(ColorRGBA.Red);                             // font color
+	  hudText.setText("Health: " + otherShip.getHealth() + "");             // the text
+	  hudText.setLocalTranslation(0, app.getContext().getSettings().getHeight() - 30, 0); // position
+      app.getGuiNode().attachChild(hudText);
+     
+  }
+  
   @Override
   public void collision(PhysicsCollisionEvent arg0) {
 	// TODO Auto-generated method stub
 	  Spatial bullet = arg0.getNodeB();
 	  bullet.removeFromParent();
+	  
+	  Spatial ship = arg0.getNodeA();
+	  
+	  if (ship.equals(spaceShip.getSpatial())) {
+		  System.out.println("COLLISION");
+			int health = spaceShip.getHealth();
+			health -= 1;
+			
+			if (health <= 0)
+			{
+				rootNode.detachChild(spaceShip.getSpatial());
+			}
+			
+			spaceShip.setHealth(health);
+			updateHealthBar();
+	  } else {
+		  int health = otherShip.getHealth();
+		  health -=1;
+		  
+		  if (health <= 0)
+			{
+				rootNode.detachChild(otherShip.getSpatial());
+			}
+			
+		  otherShip.setHealth(health);
+		  updateOtherHealthBar();
+	  }
 	
-	System.out.println("COLLISION");
-	int health = spaceShip.getHealth();
-	health -= 1;
 	
-	if (health <= 0)
-	{
-		rootNode.detachChild(spaceShip.getSpatial());
-	}
-	
-	spaceShip.setHealth(health);
-	updateHealthBar();
   }
   
 }
