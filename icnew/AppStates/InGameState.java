@@ -214,25 +214,25 @@ public class InGameState extends AbstractAppState {
 			}
 			
 			if (name.equals("rotateRight") && rotate) {
-				ship_phy.applyTorque(new Vector3f(0, -50 * tpf, 0));
+				ship_phy.applyTorqueImpulse(new Vector3f(0, -10 * tpf, 0));
 				//quat.fromAngles(0, 5 * tpf, 0); 
 				//shipNode.rotate(quat);        	
 			}
 			
 			if (name.equals("rotateLeft") && rotate) {
-				ship_phy.applyTorque(new Vector3f(0, 50 * tpf, 0));
+				ship_phy.applyTorqueImpulse(new Vector3f(0, 10 * tpf, 0));
 				//quat.fromAngles(0, -5 * tpf, 0); 
 				//shipNode.rotate(quat);        	
 			}
 			
 			if (name.equals("rotateUp") && rotate) {
-				ship_phy.applyTorque(new Vector3f(0, 0, -50 * tpf));
+				ship_phy.applyTorqueImpulse(new Vector3f(0, 0, -10 * tpf));
 				//quat.fromAngles(0, 0, 5 * tpf); 
 				//shipNode.rotate(quat);        	
 			}
 			
 			if (name.equals("rotateDown") && rotate) {
-				ship_phy.applyTorque(new Vector3f(0, 0, 50 * tpf));
+				ship_phy.applyTorqueImpulse(new Vector3f(0, 0, 10 * tpf));
 
 				//quat.fromAngles(0, 0, -5 * tpf); 
 				//shipNode.rotate(quat);        	
@@ -320,7 +320,6 @@ public class InGameState extends AbstractAppState {
 		Vector3f direction=new Vector3f(10f,0,0);
 		ship_phy.getPhysicsRotation().multLocal(direction);
 		ship_phy.applyCentralForce(direction);
-		//ship_phy.applyCentralForce(new Vector3f(10,0,0));
 	}
 	
 	/** 
@@ -334,7 +333,6 @@ public class InGameState extends AbstractAppState {
 		Vector3f direction=new Vector3f(0,10f,0);
 		ship_phy.getPhysicsRotation().multLocal(direction);
 		ship_phy.applyCentralForce(direction);
-		//ship_phy.applyCentralForce(new Vector3f(10,0,0));
 	}
 	
 	/**
@@ -348,35 +346,18 @@ public class InGameState extends AbstractAppState {
 		Vector3f direction=new Vector3f(0,-10f,0);
 		ship_phy.getPhysicsRotation().multLocal(direction);
 		ship_phy.applyCentralForce(direction);
-	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
-	}
-	
-	/**
-	 * Rotates the ship left
-	 */
-	public void rotateLeft() {
-		ship_phy.applyImpulse(new Vector3f(0,0,.005f), Vector3f.UNIT_Y);
 	}
 	
 	public void moveLeft() {
 		Vector3f direction=new Vector3f(0,0,10f);
 		ship_phy.getPhysicsRotation().multLocal(direction);
 		ship_phy.applyCentralForce(direction);
-	//ship_phy.applyCentralForce(new Vector3f(10,0,0));
-	}
-	
-	/** 
-	 * Rotates the ship right
-	 */
-	public void rotateRight() {
-		ship_phy.applyImpulse(new Vector3f(0,0,-.005f), Vector3f.UNIT_Y);
 	}
 	
 	public void moveRight() {
 		Vector3f direction=new Vector3f(0,0,-10f);
 		ship_phy.getPhysicsRotation().multLocal(direction);
 		ship_phy.applyCentralForce(direction);
-		//ship_phy.applyCentralForce(new Vector3f(10,0,0));
 	}
 	
 	/** 
