@@ -7,12 +7,17 @@ package AppStates;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
+
 import projectiles.DamageBullet;
 import projectiles.Projectile;
+import projectiles.SpeedBullet;
 import ship.PlayerSpaceship;
 import ship.SpaceshipControl;
 
-import com.bulletphysics.collision.shapes.CollisionShape;
+import com.jme3.bullet.collision.PhysicsCollisionEvent;
+import com.jme3.bullet.collision.PhysicsCollisionListener;
+import com.jme3.bullet.collision.shapes.CollisionShape;
 import com.jme3.app.Application;
 import com.jme3.app.SimpleApplication;
 import com.jme3.app.state.AbstractAppState;
@@ -20,6 +25,7 @@ import com.jme3.app.state.AppStateManager;
 import com.jme3.asset.AssetManager;
 import com.jme3.bullet.BulletAppState;
 import com.jme3.bullet.collision.shapes.CompoundCollisionShape;
+import com.jme3.bullet.collision.shapes.SphereCollisionShape;
 import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.bullet.control.VehicleControl;
 import com.jme3.bullet.util.CollisionShapeFactory;
@@ -53,7 +59,7 @@ import com.jme3.util.SkyFactory;
  *
  * @author Adi
  */
-public class InGameState extends AbstractAppState {
+public class InGameState extends AbstractAppState implements PhysicsCollisionListener {
     private AppStateManager stateManager;
     private SimpleApplication app;
     private Node              rootNode;
@@ -65,6 +71,8 @@ public class InGameState extends AbstractAppState {
     private PlayerSpaceship spaceShip;
     private PlayerSpaceship otherShip;
     private CameraNode cam;
+    
+    private BitmapText hudText;
     
     
     @Override
@@ -94,6 +102,8 @@ public class InGameState extends AbstractAppState {
         initChaseCam();
         prepareHealthBar();
         spaceShip.getRigidBodyControl().setGravity(new Vector3f(0, 0, 0));
+        
+        physics.getPhysicsSpace().addCollisionListener(this);
     }
     
     @Override
@@ -133,6 +143,7 @@ public class InGameState extends AbstractAppState {
       // do the following while game is RUNNING
       // modify scene graph...
       // call some methods...
+    	System.out.println(spaceShip.getHealth()+"");
     }
     
     /**
@@ -192,13 +203,26 @@ public class InGameState extends AbstractAppState {
   
   private void initSpaceship() {
       Spatial ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
-    
-      RigidBodyControl ship_phy = new RigidBodyControl(1.0f);
-
+      CollisionShape ship_shape = CollisionShapeFactory.createDynamicMeshShape(ship);
+      RigidBodyControl ship_phy = new RigidBodyControl(ship_shape, 1.0f);
       
-      spaceShip = new PlayerSpaceship(ship, ship_phy, 0, 0, 0, 0, 0, 0);
-
+      System.out.println("1");
       
+      String[] options = {"Big", "Small"};
+      //int pane = JOptionPane.showOptionDialog(null, "Choose your ship. A bigger ship has less speed but more damage,  while a smaller ship has greater speed but less damage.", "Choose your ship", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+      int pane = 1;
+      if (pane == 0)
+      {
+      	System.out.println("Big");
+      	spaceShip = new PlayerSpaceship(ship, ship_phy, ship_shape, 0f, 0f, 0f, 0, 0, true);
+      }
+      else if (pane == 1)
+      {
+    	System.out.println("Small");
+    	spaceShip = new PlayerSpaceship(ship, ship_phy, ship_shape, 0f, 0f, 0f, 0, 0, false);
+      }
+      
+      System.out.println(spaceShip.getSpeed());
       
       physics.getPhysicsSpace().add(spaceShip.getRigidBodyControl());
    
@@ -207,14 +231,25 @@ public class InGameState extends AbstractAppState {
   }
   
   private Projectile initBullet(PlayerSpaceship ship) {
-	  RigidBodyControl bullet_phy = new RigidBodyControl(1.0f);
-	  Projectile bullet = new DamageBullet(32, 32, 0.4f, true, false, bullet_phy);
-	  bullet.getGeometry().setMaterial(new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md"));
+	  SphereCollisionShape bullet_shape = new SphereCollisionShape(1f);
+	  RigidBodyControl bullet_phy = new RigidBodyControl(bullet_shape,.0000001f);
+	 
+	  Projectile bullet;
+	  if (spaceShip.getSize())
+	  {
+		  bullet = new DamageBullet(32, 32, 0.4f, true, false, bullet_phy, bullet_shape);
+	  }
+	  else
+	  {
+		  bullet = new SpeedBullet(32, 32, 0.25f, true, false, bullet_phy, bullet_shape);
+	  }
+	  
+	  bullet.getGeometry().setMaterial(new Material(assetManager, "Common/MatDefs/Light/Lighting.j3md"));
 	  rootNode.attachChild(bullet.getGeometry());
 
 	  /** Position the cannon ball  */
 
-	  bullet.getGeometry().setLocalTranslation(ship.getSpatial().getLocalTranslation());
+	  bullet.getGeometry().setLocalTranslation(ship.getSpatial().getLocalTranslation().add(new Vector3f(-5f, 0f, 0f)));
 		System.out.println(bullet.getGeometry().getLocalTranslation());
 
 	  /** Make the ball physcial with a mass > 0.0f */
@@ -222,6 +257,7 @@ public class InGameState extends AbstractAppState {
 	  /** Add physical ball to physics space. */
 		bullet.getGeometry().addControl(bullet_phy);
 	  physics.getPhysicsSpace().add(bullet.getRigidBodyControl());
+
       bullet.getRigidBodyControl().setGravity(new Vector3f(0,0,0));
       
       return bullet;
@@ -237,12 +273,14 @@ public class InGameState extends AbstractAppState {
     BitmapFont myFont = assetManager.loadFont("Interface/Fonts/Default.fnt");
     BitmapText ch = new BitmapText(myFont, false);
     ch.setSize(myFont.getCharSet().getRenderedSize() * 2);
-   // Geometry ch = new Geometry();
+   
     ch.setText("+");        // fake crosshairs :)
     ch.setLocalTranslation( // center
-    app.getContext().getSettings().getWidth() / 2 - myFont.getCharSet().getRenderedSize() / 3 * 2,
-    app.getContext().getSettings().getHeight() / 2 + ch.getLineHeight() / 2, 0);
+    app.getContext().getSettings().getWidth() ,
+    app.getContext().getSettings().getHeight() / 2, 0);
+    
     app.getGuiNode().attachChild(ch);
+    
   }
   
 
@@ -263,15 +301,45 @@ public class InGameState extends AbstractAppState {
   }
   
   public void prepareHealthBar() {
-	  BillboardControl billboard = new BillboardControl();
-      Geometry healthbar = new Geometry("healthbar", new Quad(4f, 0.2f));
-      Material mathb = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");;
-      mathb.setColor("Color", ColorRGBA.Red);
-      healthbar.setMaterial(mathb);
-      app.getGuiNode().attachChild(healthbar);
-      healthbar.center();
-      healthbar.move(0, 7, 2);
-      healthbar.addControl(billboard);
+	 
+	  hudText = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"), false);
+	  hudText.setSize(assetManager.loadFont("Interface/Fonts/Default.fnt").getCharSet().getRenderedSize());      // font size
+	  hudText.setColor(ColorRGBA.Blue);                             // font color
+	  hudText.setText("Health: " + spaceShip.getHealth() + "");             // the text
+	  hudText.setLocalTranslation(0, app.getContext().getSettings().getHeight(), 0); // position
+      app.getGuiNode().attachChild(hudText);
+     
+  }
+
+  public void updateHealthBar() {
+	
+	  app.getGuiNode().detachChild(hudText);
+	  hudText = new BitmapText(assetManager.loadFont("Interface/Fonts/Default.fnt"), false);
+	  hudText.setSize(assetManager.loadFont("Interface/Fonts/Default.fnt").getCharSet().getRenderedSize());      // font size
+	  hudText.setColor(ColorRGBA.Blue);                             // font color
+	  hudText.setText("Health: " + spaceShip.getHealth() + "");             // the text
+	  hudText.setLocalTranslation(0, app.getContext().getSettings().getHeight(), 0); // position
+      app.getGuiNode().attachChild(hudText);
+     
+  }
+  
+  @Override
+  public void collision(PhysicsCollisionEvent arg0) {
+	// TODO Auto-generated method stub
+	  Spatial bullet = arg0.getNodeB();
+	  bullet.removeFromParent();
+	
+	System.out.println("COLLISION");
+	int health = spaceShip.getHealth();
+	health -= 1;
+	
+	if (health <= 0)
+	{
+		rootNode.detachChild(spaceShip.getSpatial());
+	}
+	
+	spaceShip.setHealth(health);
+	updateHealthBar();
   }
   
 }
