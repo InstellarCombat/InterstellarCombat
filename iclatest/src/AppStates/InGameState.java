@@ -4,11 +4,10 @@
  */
 package AppStates;
 
-import java.awt.Color;
+import java.io.Serializable;
 
-import javax.swing.JOptionPane;
-
-import mygame.SpaceshipControl;
+import mygame.*;
+import interfaces.*;
 
 import com.bulletphysics.collision.shapes.CollisionShape;
 import com.jme3.app.Application;
@@ -56,6 +55,7 @@ public class InGameState extends AbstractAppState {
 	private AssetManager      assetManager;
 	private InputManager      inputManager;
 	private BulletAppState    physics;
+	private Main w;
 	
 		// In game fields
 	private RigidBodyControl  ship_phy;
@@ -82,7 +82,8 @@ public class InGameState extends AbstractAppState {
 		this.inputManager = this.app.getInputManager();
 		this.physics = new BulletAppState();
 		this.rotate = false;
-
+		this.w = ((InterstellarCombat)app).getMain();
+		
 		stateManager.attach(physics);
 		initKeys();
 		initSpaceship();

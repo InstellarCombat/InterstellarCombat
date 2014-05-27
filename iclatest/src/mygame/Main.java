@@ -3,6 +3,8 @@ package mygame;
 import com.jme3.app.*;
 import com.jme3.system.*;
 
+import interfaces.NetworkGUI;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.concurrent.Callable;
@@ -18,10 +20,12 @@ public class Main {
     private JPanel cardPanel;
     private Container canvasPanel;
     private GameInfo information;
+    private NetworkManager netManager;
     private static final String appClass = "mygame.InterstellarCombat";
     
     public Main () {
     	information = new GameInfo();
+    	netManager = new NetworkManager();
     }
     
     private void begin () {
@@ -39,7 +43,6 @@ public class Main {
                 
                 canvasPanel.add(canvas, BorderLayout.CENTER);
                 //frame.pack();
-                startApp();
                 frame.setLocationRelativeTo(null);
                 frame.setSize(1200, 900);
                 frame.setVisible(true);
@@ -98,6 +101,10 @@ public class Main {
     public GameInfo getInfo () {
     	return information;
     }
+    
+    public NetworkManager getNetManager () {
+    	return netManager;
+    }
 
     public void createCanvas(String appClass){
         AppSettings settings = new AppSettings(true);
@@ -117,27 +124,19 @@ public class Main {
         	if (app == null) return;
         }
 
+        ((InterstellarCombat)app).setMain(this);
+        netManager.setGUI((InterstellarCombat)app);
         app.setPauseOnLostFocus(false);
         app.setSettings(settings);
         app.createCanvas();
-        app.startCanvas();
 
         context = (JmeCanvasContext) app.getContext();
         canvas = context.getCanvas();
         canvas.setSize(settings.getWidth(), settings.getHeight());
     }
 
-    public void startApp(){
-        app.startCanvas();
-        app.enqueue(new Callable<Void>(){
-            public Void call(){
-                if (app instanceof SimpleApplication){
-                    SimpleApplication simpleApp = (SimpleApplication) app;
-                    simpleApp.getFlyByCamera().setDragToRotate(true);
-                }
-                return null;
-            }
-        });
+    public Application getApp () {
+    	return app;
     }
     
     public void changePanel(String panel) { 

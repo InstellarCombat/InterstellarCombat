@@ -7,9 +7,12 @@ import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.concurrent.Callable;
 
 import javax.imageio.*;
 import javax.swing.*;
+
+import com.jme3.app.SimpleApplication;
 
 public class OptionPanel extends JPanel {
 	private Main w;
@@ -150,6 +153,20 @@ public class OptionPanel extends JPanel {
     	g.drawString("[Start]", strx, stry);
     }
     
+    private void startApp() {
+    	final InterstellarCombat app = (InterstellarCombat)w.getApp();
+        app.startCanvas();
+        app.enqueue(new Callable<Void>(){
+            public Void call(){
+                if (app instanceof SimpleApplication){
+                    SimpleApplication simpleApp = (SimpleApplication) app;
+                    simpleApp.getFlyByCamera().setDragToRotate(true);
+                }
+                return null;
+            }
+        });
+    }
+    
     class optionListener implements MouseListener {
 		public void mouseClicked(MouseEvent e) {
 			int xMouse = e.getX();
@@ -162,6 +179,9 @@ public class OptionPanel extends JPanel {
 				w.getInfo().setServer(!tB.isEnabled());
 				
 				if (tB.isEnabled()) w.getInfo().setServerIP(tB.getText());
+				
+				w.getNetManager().connect(w.getInfo());
+				startApp();
 				w.changePanel("play");
 			}
 		}

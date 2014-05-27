@@ -34,6 +34,7 @@ public interface NetworkHandler {
 	 */
 	public void networkReceive(Serializable s, int n);
 	
+	
 	/**
 	 * Closes connection to network
 	 */
