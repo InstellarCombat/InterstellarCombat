@@ -7,39 +7,50 @@ import javax.swing.JOptionPane;
 
 import networking.SchoolClient;
 import networking.SchoolServer;
+import info.GameInfo;
 import interfaces.*;
 
 public class NetworkManager {
 	private NetworkGUI gui;
+	private SchoolServer server;
+	private SchoolClient client;
 	
 	public void setGUI (NetworkGUI game) {
 		gui = game;
 	}
 	
 	public boolean connect (GameInfo info) {
-		if (info.isServer()) {
-			SchoolServer iServer = new SchoolServer();
-			iServer.register(gui);
+		if (server != null) {
+			server.register(gui);
 			
 			try {
-				iServer.run();
+				server.run();
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(null, "Cannot create server");
 				return false;
 			}
 		} else {
-            SchoolClient sc = new SchoolClient();
             String host = info.getServerIP();
-            Socket res = sc.connect(host);
+            Socket res = client.connect(host);
 
             if (res == null) {
                 JOptionPane.showMessageDialog(null, "Could not connect to " + host + "!");
                 return false;
             } else {
-                sc.register(gui);
-                sc.run(res);
+            	client.register(gui);
+            	client.run(res);
             }            
 		}
         return true;
+	}
+
+	public NetworkHandler createHandler(GameInfo info) {
+		if (info.isServer()) {
+			server = new SchoolServer();
+			return server;
+		} else {
+			client = new SchoolClient();
+			return client;
+		}
 	}
 }

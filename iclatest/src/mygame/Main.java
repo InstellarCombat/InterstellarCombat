@@ -3,6 +3,7 @@ package mygame;
 import com.jme3.app.*;
 import com.jme3.system.*;
 
+import info.GameInfo;
 import interfaces.NetworkGUI;
 
 import java.awt.*;
@@ -11,10 +12,12 @@ import java.util.concurrent.Callable;
 
 import javax.swing.*;
 
+import panels.MenuPanel;
+import panels.OptionPanel;
+
 public class Main {
 
     private JmeCanvasContext context;
-    private Canvas canvas;
     private Application app;
     private JFrame frame;
     private JPanel cardPanel;
@@ -41,7 +44,6 @@ public class Main {
 
                 createFrame();
                 
-                canvasPanel.add(canvas, BorderLayout.CENTER);
                 //frame.pack();
                 frame.setLocationRelativeTo(null);
                 frame.setSize(1200, 900);
@@ -107,10 +109,6 @@ public class Main {
     }
 
     public void createCanvas(String appClass){
-        AppSettings settings = new AppSettings(true);
-        settings.setWidth(640);
-        settings.setHeight(480);
-
         try{
             Class<? extends Application> clazz = (Class<? extends Application>) Class.forName(appClass);
             app = clazz.newInstance();
@@ -126,17 +124,14 @@ public class Main {
 
         ((InterstellarCombat)app).setMain(this);
         netManager.setGUI((InterstellarCombat)app);
-        app.setPauseOnLostFocus(false);
-        app.setSettings(settings);
-        app.createCanvas();
-
-        context = (JmeCanvasContext) app.getContext();
-        canvas = context.getCanvas();
-        canvas.setSize(settings.getWidth(), settings.getHeight());
     }
 
     public Application getApp () {
     	return app;
+    }
+    
+    public Container getCanvas () {
+    	return canvasPanel;
     }
     
     public void changePanel(String panel) { 
