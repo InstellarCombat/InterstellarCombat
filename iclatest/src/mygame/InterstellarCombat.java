@@ -2,10 +2,9 @@ package mygame;
 
 import java.io.*;
 
-import info.BulletInfo;
-import info.GameInfo;
-import info.SetupInfo;
-import info.ShipInfo;
+import javax.swing.JOptionPane;
+
+import info.*;
 import interfaces.*;
 import AppStates.InGameState;
 
@@ -67,13 +66,15 @@ public class InterstellarCombat extends SimpleApplication implements NetworkGUI 
 
 	@Override
 	public void receive(Serializable s) {
-		if (s instanceof SetupInfo) {
+		System.out.println("we have a message");
+		inGameState.setupGame((SetupInfo)s);
+		/*if (s instanceof SetupInfo) {
 			inGameState.setupGame((SetupInfo)s);
 		} else if (s instanceof ShipInfo) {
 			inGameState.updateOtherCoords((ShipInfo)s);
 		} else if (s instanceof BulletInfo) {
 			inGameState.addBullet((BulletInfo)s);
-		}
+		} */
 	}
 
 }

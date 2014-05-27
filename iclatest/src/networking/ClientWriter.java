@@ -48,7 +48,7 @@ class ClientWriter implements Runnable {
 	                out.flush();
 	                out.reset();
 	                obj = null;
-	                System.out.println("Sent an update!");
+	                //System.out.println("Sent an update!");
                 }
             }
         } catch (IOException e) {

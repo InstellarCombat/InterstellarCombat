@@ -54,7 +54,7 @@ class ClientReader implements Runnable {
                 } catch (EOFException ex) {
                 }
                 updater.networkReceive(data, num);
-                System.out.println("Got an update!");
+                //System.out.println("Got an update!");
             }
             if (in != null)
                 in.close();

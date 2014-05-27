@@ -207,7 +207,7 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
 	
 	private void initSpaceship(Vector3f spot) {
 		Spatial ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
-		//JOptionPane.showMessageDialog(null, "here");
+		JOptionPane.showMessageDialog(null, "here");
 		CollisionShape ship_shape = CollisionShapeFactory.createDynamicMeshShape(ship);
 		RigidBodyControl ship_phy = new RigidBodyControl(ship_shape, 1.0f);
 		
@@ -232,7 +232,7 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
 	
 	private void initOthership(Vector3f spot) {
 		Spatial ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
-		System.out.println("here");
+		JOptionPane.showMessageDialog(null, "here");
 		CollisionShape ship_shape = CollisionShapeFactory.createDynamicMeshShape(ship);
 		RigidBodyControl ship_phy = new RigidBodyControl(ship_shape, 1.0f);
 		
@@ -408,10 +408,11 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
 	}
 		
 	public void setupGame (SetupInfo info) {
-		otherShip.setSize(info.isBig());
-		otherShip.getSpatial().move(info.getCoords());
 		initSpaceship(w.getInfo().getStartCoords());
 		initOthership(info.getCoords());
+		
+		otherShip.setSize(info.isBig());
+		otherShip.getSpatial().move(info.getCoords());
 		
 		initChaseCam();
 		prepareHealthBar();
