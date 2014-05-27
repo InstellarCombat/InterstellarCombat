@@ -1,7 +1,9 @@
 package networking;
 
 import interfaces.*;
+
 import java.io.BufferedInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
@@ -49,6 +51,7 @@ class ClientReader implements Runnable {
                     System.exit(0);
                 } catch (SocketException ex) {
                 	//nothing happens gg
+                } catch (EOFException ex) {
                 }
                 updater.networkReceive(data, num);
                 System.out.println("Got an update!");

@@ -11,6 +11,8 @@ import info.ShipInfo;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
+
 import projectiles.*;
 import ship.*;
 import mygame.*;
@@ -139,7 +141,7 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
 		// do the following while game is RUNNING
 		// modify scene graph...
 		// call some methods...
-		System.out.println(spaceShip.getHealth()+"");
+		//System.out.println(spaceShip.getHealth()+"");
 	}
 	
 	/**
@@ -205,6 +207,7 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
 	
 	private void initSpaceship(Vector3f spot) {
 		Spatial ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
+		//JOptionPane.showMessageDialog(null, "here");
 		CollisionShape ship_shape = CollisionShapeFactory.createDynamicMeshShape(ship);
 		RigidBodyControl ship_phy = new RigidBodyControl(ship_shape, 1.0f);
 		
@@ -229,6 +232,7 @@ public class InGameState extends AbstractAppState implements PhysicsCollisionLis
 	
 	private void initOthership(Vector3f spot) {
 		Spatial ship = assetManager.loadModel("Models/space_frigate_63DS/space_frigate_6.j3o");
+		System.out.println("here");
 		CollisionShape ship_shape = CollisionShapeFactory.createDynamicMeshShape(ship);
 		RigidBodyControl ship_phy = new RigidBodyControl(ship_shape, 1.0f);
 		

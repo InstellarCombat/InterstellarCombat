@@ -37,11 +37,6 @@ public class InterstellarCombat extends SimpleApplication implements NetworkGUI 
     	handler.send(new SetupInfo(info.isBigShip(), info.getStartCoords()));
         inGameState = new InGameState();
         stateManager.attach(inGameState);
-        
-        Geometry geo = new Geometry("Box", new Box(1, 1, 1));
-        geo.setMaterial(new Material(assetManager, "Common/MatDefs/Misc/ShowNormals.j3md"));
-        rootNode.attachChild(geo);
-        geo.move(0, 0, 2);
     }
     
     public void setMain (Main m) {
